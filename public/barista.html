@@ -124,6 +124,11 @@
         <span>Kitchen Tickets (KDS)</span>
         <span class="badge-count" id="staffTicketsBadge">0</span>
       </button>
+      <button class="nav-tab" data-tab="tables">
+        <span class="tab-icon">🪑</span>
+        <span>Table Settlement (Paid & Left)</span>
+        <span class="badge-count" id="occupiedTablesBadge">0 Occupied</span>
+      </button>
       <button class="nav-tab" data-tab="qr">
         <span class="tab-icon">📱</span>
         <span>Table QR Code Station</span>
@@ -149,6 +154,27 @@
           <button class="btn btn-sm btn-outline" id="btnRefreshTickets">🔄 Refresh Now</button>
         </div>
         <div class="tickets-grid" id="staffTicketsGrid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: TABLE SETTLEMENT & CLEARING -->
+    <section class="tab-pane" id="tab-tables">
+      <div class="hero-banner" style="background: linear-gradient(135deg, #1e3a8a, #0f172a);">
+        <h2>Table Serving & Settlement 🪑</h2>
+        <p>When customers have finished their drinks, paid, and left the café, click <strong>"Customer Paid & Left"</strong> to archive orders and clear the table for the next builder.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3>Café Tables (1 to 12)</h3>
+            <span class="subtext" style="margin:0;">Live occupancy & settlement status</span>
+          </div>
+          <button class="btn btn-sm btn-outline" id="btnRefreshTables">🔄 Refresh Tables</button>
+        </div>
+        <div class="tickets-grid" id="tablesGridContainer">
           <!-- Populated by JS -->
         </div>
       </div>
@@ -239,6 +265,7 @@
           document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
           if (tab.dataset.tab === 'feedback') loadFeedback();
           if (tab.dataset.tab === 'tickets') loadTickets();
+          if (tab.dataset.tab === 'tables') loadTables();
         });
       });
 
@@ -341,6 +368,82 @@
         window.open(targetUrl, '_blank');
       });
 
+      // Table Settlement & Management (Customer Paid & Left)
+      async function loadTables() {
+        try {
+          const res = await fetch('/api/tables');
+          const data = await res.json();
+          const grid = document.getElementById('tablesGridContainer');
+          if (!grid || !data.tables) return;
+
+          const occupied = data.tables.filter(t => t.status === 'Occupied');
+          const badge = document.getElementById('occupiedTablesBadge');
+          if (badge) badge.textContent = `${occupied.length} Occupied`;
+
+          grid.innerHTML = data.tables.map(t => {
+            const isOcc = t.status === 'Occupied';
+            return `
+              <div class="ticket-card" style="border: 2px solid ${isOcc ? '#ea4335' : '#34a853'}; background: ${isOcc ? '#fffcfb' : '#f8fdf9'};">
+                <div>
+                  <div class="ticket-header">
+                    <span style="font-size:1.3rem; font-weight:800; color:#1a1a1a;">${t.table_num}</span>
+                    <span class="order-status-badge" style="background:${isOcc ? '#fce8e6' : '#e6f4ea'}; color:${isOcc ? '#c5221f' : '#137333'};">
+                      ${isOcc ? '🔴 Occupied' : '🟢 Available'}
+                    </span>
+                  </div>
+
+                  ${isOcc ? `
+                    <div style="font-size:0.88rem; margin: 10px 0;">
+                      ${t.builder ? `<strong>Builder Seated:</strong> ${escapeHtml(t.builder.name)}<br><em style="color:#5f6368;">"${escapeHtml(t.builder.project)}"</em><br>` : ''}
+                      ${t.activeOrders && t.activeOrders.length > 0 ? `
+                        <div style="margin-top:6px; padding:8px; background:#fff; border-radius:6px; border:1px solid #ebd9c8;">
+                          <strong>Order:</strong> ${escapeHtml(t.activeOrders[0].item_name)}<br>
+                          <span style="font-size:0.78rem; color:#80868b;">Status: ${t.activeOrders[0].status} • ${timeAgo(t.activeOrders[0].created_at)}</span>
+                        </div>
+                      ` : '<div style="font-size:0.8rem; color:#80868b; margin-top:4px;">No active orders brewing.</div>'}
+                    </div>
+                  ` : `
+                    <div class="subtext" style="font-style:italic; margin: 12px 0;">Table is clean, vacated, and ready for new guests.</div>
+                  `}
+                </div>
+
+                <div style="margin-top:14px;">
+                  ${isOcc ? `
+                    <button class="btn btn-success btn-sm btn-clear-table" data-table="${t.table_num}" style="width:100%;">
+                      💳 Customer Paid & Left (Free Table)
+                    </button>
+                  ` : `
+                    <span class="meta-tag" style="display:block; text-align:center; background:#e6f4ea; color:#137333; border:none; padding:8px;">Ready to Seat</span>
+                  `}
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          document.querySelectorAll('.btn-clear-table').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const tableNum = btn.dataset.table;
+              if (confirm(`Mark ${tableNum} as Paid & Left? This will complete orders and free up the table.`)) {
+                btn.disabled = true;
+                btn.textContent = 'Clearing table...';
+                await fetch('/api/tables/clear', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ table_num: tableNum })
+                });
+                loadTables();
+                loadTickets();
+              }
+            });
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      const btnRefreshTables = document.getElementById('btnRefreshTables');
+      if (btnRefreshTables) btnRefreshTables.addEventListener('click', loadTables);
+
       // 3. Feedback Feed
       async function loadFeedback() {
         try {
@@ -379,8 +482,12 @@
 
       // Initial run
       loadTickets();
+      loadTables();
       renderQrCard();
-      setInterval(loadTickets, 3500);
+      setInterval(() => {
+        loadTickets();
+        loadTables();
+      }, 3500);
     });
   </script>
 </body>

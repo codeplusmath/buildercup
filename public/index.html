@@ -43,12 +43,16 @@
       </button>
       <button class="nav-tab" data-tab="radar">
         <span class="tab-icon">📡</span>
-        <span>Builder Radar</span>
-        <span class="badge-count" id="buildersCountBadge">3</span>
+        <span>Builder Radar & Pings</span>
+        <span class="badge-count" id="pingsCountBadge">2</span>
+      </button>
+      <button class="nav-tab" data-tab="history">
+        <span class="tab-icon">📜</span>
+        <span>Order History</span>
       </button>
       <button class="nav-tab" data-tab="waits">
         <span class="tab-icon">⏱️</span>
-        <span>Better Waits & Pulse</span>
+        <span>Waits & Pulse</span>
       </button>
       <a href="/barista" class="nav-tab staff-link" target="_blank" title="Barista Kitchen Display System">
         <span class="tab-icon">🔒</span>
@@ -221,6 +225,26 @@
         </div>
       </div>
 
+      </div>
+
+      <!-- Live Pings & Sparks Center -->
+      <div class="card pings-center-card" style="margin-top: 20px;">
+        <div class="card-header">
+          <div>
+            <h3>💌 Café Pings & Collaboration Sparks</h3>
+            <span class="subtext" style="margin:0;">Real-time coffee invites and icebreakers between tables</span>
+          </div>
+          <div class="pill-group" id="pingsFilterGroup">
+            <button class="vibe-pill active" data-ping-filter="all">🌐 All Sparks (<span id="allPingsCount">2</span>)</button>
+            <button class="vibe-pill" data-ping-filter="received">📥 My Received (<span id="receivedPingsCount">0</span>)</button>
+            <button class="vibe-pill" data-ping-filter="sent">📤 My Sent (<span id="sentPingsCount">0</span>)</button>
+          </div>
+        </div>
+        <div class="pings-feed" id="radarPingsFeed">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
       <!-- Ping Modal -->
       <div class="modal hidden" id="pingModal">
         <div class="modal-card">
@@ -239,6 +263,30 @@
             <button class="btn btn-outline" id="btnCancelPing">Cancel</button>
             <button class="btn btn-success" id="btnSendPingConfirm">Send Ping ☕</button>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NEW TAB: ORDER HISTORY -->
+    <section class="tab-pane" id="tab-history">
+      <div class="hero-banner" style="background: linear-gradient(135deg, #2b3a4a, #1a2530);">
+        <h2>Order History & Receipts 📜</h2>
+        <p>Track your past coffee pairings, check payment settlement, and review your café timeline.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3>Orders Timeline</h3>
+            <span class="subtext" style="margin:0;">Synced in real time across kitchen & tables</span>
+          </div>
+          <div class="pill-group" id="orderHistoryFilterGroup">
+            <button class="vibe-pill active" data-order-filter="all">All Café Orders</button>
+            <button class="vibe-pill" data-order-filter="my">My Table Orders</button>
+          </div>
+        </div>
+        <div class="orders-list" id="fullOrderHistoryList">
+          <!-- Populated dynamically -->
         </div>
       </div>
     </section>

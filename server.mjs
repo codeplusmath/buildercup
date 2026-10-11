@@ -125,6 +125,34 @@ if (existingBuilders.count === 0) {
   }
 }
 
+const existingPings = db.prepare('SELECT COUNT(*) as count FROM pings').get();
+if (existingPings.count === 0) {
+  const seedPings = [
+    {
+      id: 'p-1',
+      from_name: 'Sneha Patel',
+      from_table: 'Table 4',
+      to_name: 'Rohan Sharma',
+      to_table: 'Table 2',
+      message: 'Hey Rohan! Would love to compare notes on your Cloud Run Pub/Sub setup. Mind if I bring my espresso over?',
+      created_at: Date.now() - 12 * 60 * 1000
+    },
+    {
+      id: 'p-2',
+      from_name: 'Karthik Rao',
+      from_table: 'Table 8',
+      to_name: 'Sneha Patel',
+      to_table: 'Table 4',
+      message: 'Hi Sneha! We are integrating pgvector on Cloud SQL for our demo. Got 5 mins for quick architecture tips?',
+      created_at: Date.now() - 5 * 60 * 1000
+    }
+  ];
+  const insertPing = db.prepare('INSERT INTO pings VALUES (?, ?, ?, ?, ?, ?, ?)');
+  for (const p of seedPings) {
+    insertPing.run(p.id, p.from_name, p.from_table, p.to_name, p.to_table, p.message, p.created_at);
+  }
+}
+
 // Fallback intelligent generator for when Gemini API key is missing or offline
 function fallbackVibeRecommendation(prompt = '', vibe = '') {
   const p = (prompt + ' ' + vibe).toLowerCase();
@@ -374,10 +402,20 @@ Do not include markdown ticks or extra words outside the JSON object.`;
   }
 
   // 5. Get All Orders
+  // 5. Get Orders (with optional filter for customer order history)
   if (pathname === '/api/orders' && method === 'GET') {
     try {
-      const orders = db.prepare('SELECT * FROM orders ORDER BY created_at DESC LIMIT 30').all();
-      sendJson(res, 200, { orders });
+      const targetTable = urlObj.searchParams.get('table');
+      const targetName = urlObj.searchParams.get('name');
+      const allOrders = db.prepare('SELECT * FROM orders ORDER BY created_at DESC LIMIT 50').all();
+      let myOrders = [];
+      if (targetTable || targetName) {
+        myOrders = allOrders.filter(o =>
+          (targetTable && o.table_num.toLowerCase() === targetTable.toLowerCase()) ||
+          (targetName && o.customer_name.toLowerCase() === targetName.toLowerCase())
+        );
+      }
+      sendJson(res, 200, { orders: allOrders, myOrders });
     } catch (err) {
       sendJson(res, 500, { error: err.message });
     }
@@ -449,11 +487,69 @@ Do not include markdown ticks or extra words outside the JSON object.`;
     return;
   }
 
-  // 10. Get Pings
+  // 10. Get Pings (Community feed + My Pings)
   if (pathname === '/api/pings' && method === 'GET') {
     try {
-      const pings = db.prepare('SELECT * FROM pings ORDER BY created_at DESC LIMIT 15').all();
-      sendJson(res, 200, { pings });
+      const targetTable = urlObj.searchParams.get('table');
+      const targetName = urlObj.searchParams.get('name');
+      const allPings = db.prepare('SELECT * FROM pings ORDER BY created_at DESC LIMIT 30').all();
+      let myReceived = [];
+      let mySent = [];
+      if (targetTable || targetName) {
+        myReceived = allPings.filter(p => 
+          (targetTable && p.to_table.toLowerCase() === targetTable.toLowerCase()) ||
+          (targetName && p.to_name.toLowerCase() === targetName.toLowerCase())
+        );
+        mySent = allPings.filter(p => 
+          (targetTable && p.from_table.toLowerCase() === targetTable.toLowerCase()) ||
+          (targetName && p.from_name.toLowerCase() === targetName.toLowerCase())
+        );
+      }
+      sendJson(res, 200, { pings: allPings, myReceived, mySent });
+    } catch (err) {
+      sendJson(res, 500, { error: err.message });
+    }
+    return;
+  }
+
+  // 10b. Table Management (For complete table serving & clearing when customers pay & leave)
+  if (pathname === '/api/tables' && method === 'GET') {
+    try {
+      const tables = [];
+      for (let i = 1; i <= 12; i++) {
+        const tName = `Table ${i}`;
+        const activeOrders = db.prepare("SELECT * FROM orders WHERE table_num = ? AND status IN ('brewing', 'ready', 'delivered') ORDER BY created_at DESC").all(tName);
+        const allTableOrders = db.prepare("SELECT * FROM orders WHERE table_num = ? ORDER BY created_at DESC LIMIT 5").all(tName);
+        const builder = db.prepare("SELECT * FROM builders WHERE table_num = ?").get(tName);
+        const isOccupied = activeOrders.length > 0 || !!builder;
+        tables.push({
+          table_num: tName,
+          status: isOccupied ? 'Occupied' : 'Available',
+          activeOrdersCount: activeOrders.length,
+          activeOrders,
+          allTableOrders,
+          builder: builder || null
+        });
+      }
+      sendJson(res, 200, { tables });
+    } catch (err) {
+      sendJson(res, 500, { error: err.message });
+    }
+    return;
+  }
+
+  if (pathname === '/api/tables/clear' && method === 'POST') {
+    try {
+      const { table_num } = await parseJsonBody(req);
+      if (table_num) {
+        // Mark orders as paid & completed
+        db.prepare("UPDATE orders SET status = 'paid_and_completed' WHERE table_num = ? AND status != 'paid_and_completed'").run(table_num);
+        // Free up builder checkin
+        db.prepare("DELETE FROM builders WHERE table_num = ?").run(table_num);
+        sendJson(res, 200, { success: true, message: `${table_num} marked as Paid & Completed. Table is now available!` });
+      } else {
+        sendJson(res, 400, { error: 'table_num is required' });
+      }
     } catch (err) {
       sendJson(res, 500, { error: err.message });
     }

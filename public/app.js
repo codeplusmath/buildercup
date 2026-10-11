@@ -21,9 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (targetPane) targetPane.classList.add('active');
 
       // Refresh specific tab data
-      if (tab.dataset.tab === 'radar') loadBuilders();
+      if (tab.dataset.tab === 'radar') { loadBuilders(); loadPings(); }
+      if (tab.dataset.tab === 'history') loadOrderHistory();
       if (tab.dataset.tab === 'waits') loadPulse();
-      if (tab.dataset.tab === 'barista') loadBaristaTickets();
       if (tab.dataset.tab === 'ordering') loadOrders();
     });
   });
@@ -324,30 +324,172 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Enhanced Pings Management (Community feed + My Pings)
+  let activePingsFilter = 'all';
+  let cachedPingsData = { pings: [], myReceived: [], mySent: [] };
+
+  const pingsFilterBtns = document.querySelectorAll('#pingsFilterGroup button');
+  pingsFilterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      pingsFilterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activePingsFilter = btn.dataset.pingFilter;
+      renderPings();
+    });
+  });
+
   async function loadPings() {
     try {
-      const res = await fetch('/api/pings');
+      const myTable = document.getElementById('custTable')?.value || '';
+      const myName = document.getElementById('custName')?.value || '';
+      const res = await fetch(`/api/pings?table=${encodeURIComponent(myTable)}&name=${encodeURIComponent(myName)}`);
       const data = await res.json();
-      const container = document.getElementById('pingsFeed');
-      if (!container || !data.pings) return;
+      if (!data.pings) return;
+      cachedPingsData = data;
 
-      if (data.pings.length === 0) {
-        container.innerHTML = `<div class="subtext">No pings sent yet. Be the first to break the ice from Builder Radar!</div>`;
-        return;
+      const allCount = data.pings.length;
+      const recCount = (data.myReceived || []).length;
+      const sentCount = (data.mySent || []).length;
+
+      const allEl = document.getElementById('allPingsCount');
+      if (allEl) allEl.textContent = allCount;
+      const recEl = document.getElementById('receivedPingsCount');
+      if (recEl) recEl.textContent = recCount;
+      const sentEl = document.getElementById('sentPingsCount');
+      if (sentEl) sentEl.textContent = sentCount;
+
+      const pingsBadge = document.getElementById('pingsCountBadge');
+      if (pingsBadge) pingsBadge.textContent = recCount > 0 ? `${recCount} for you` : allCount;
+
+      renderPings();
+    } catch (e) {
+      console.error('Error loading pings:', e);
+    }
+  }
+
+  function renderPings() {
+    const feed = document.getElementById('radarPingsFeed');
+    const bottomFeed = document.getElementById('pingsFeed');
+    let list = cachedPingsData.pings || [];
+    if (activePingsFilter === 'received') list = cachedPingsData.myReceived || [];
+    if (activePingsFilter === 'sent') list = cachedPingsData.mySent || [];
+
+    const myTable = (document.getElementById('custTable')?.value || '').toLowerCase();
+    const myName = (document.getElementById('custName')?.value || '').toLowerCase();
+
+    const html = list.length === 0 ? 
+      `<div class="subtext" style="padding:12px 0;">No pings in this view yet. Break the ice by clicking "Send Coffee Ping" above!</div>` :
+      list.map(p => {
+        const isForMe = (myTable && p.to_table.toLowerCase() === myTable) || (myName && p.to_name.toLowerCase() === myName);
+        return `
+          <div class="ping-item" style="${isForMe ? 'border: 2px solid #1a73e8; background: #e8f0fe; padding:12px;' : 'padding:12px;'}">
+            <span class="ping-icon">${isForMe ? '🔔' : '☕'}</span>
+            <div style="flex:1;">
+              <strong>${escapeHtml(p.from_name)} (${escapeHtml(p.from_table)})</strong> ➔ 
+              <strong>${escapeHtml(p.to_name)} (${escapeHtml(p.to_table)})</strong>
+              ${isForMe ? '<span class="badge-count" style="margin-left:6px; background:#1a73e8; color:#fff;">For You</span>' : ''}
+              <div style="margin: 4px 0; color: #202124;"><em>"${escapeHtml(p.message)}"</em></div>
+              <div style="font-size:0.75rem; color:#80868b;">${timeAgo(p.created_at)}</div>
+            </div>
+            ${!isForMe ? `
+              <button class="btn btn-outline btn-sm btn-ping-reply" data-to-name="${escapeHtml(p.from_name)}" data-to-table="${escapeHtml(p.from_table)}">
+                Reply ☕
+              </button>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+
+    if (feed) feed.innerHTML = html;
+    if (bottomFeed) bottomFeed.innerHTML = html;
+
+    document.querySelectorAll('.btn-ping-reply').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activePingTarget = {
+          name: btn.dataset.toName,
+          table: btn.dataset.toTable,
+          icebreaker: 'Thanks for the ping! Would love to chat and compare architecture notes.'
+        };
+        openPingModal();
+      });
+    });
+  }
+
+  // Enhanced Order History
+  let activeOrderHistoryFilter = 'all';
+  let cachedOrdersData = { orders: [], myOrders: [] };
+
+  const orderHistoryFilterBtns = document.querySelectorAll('#orderHistoryFilterGroup button');
+  orderHistoryFilterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      orderHistoryFilterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeOrderHistoryFilter = btn.dataset.orderFilter;
+      renderOrderHistory();
+    });
+  });
+
+  async function loadOrderHistory() {
+    try {
+      const myTable = document.getElementById('custTable')?.value || '';
+      const myName = document.getElementById('custName')?.value || '';
+      const res = await fetch(`/api/orders?table=${encodeURIComponent(myTable)}&name=${encodeURIComponent(myName)}`);
+      const data = await res.json();
+      if (!data.orders) return;
+      cachedOrdersData = data;
+      renderOrderHistory();
+    } catch (e) {
+      console.error('Error loading order history:', e);
+    }
+  }
+
+  function renderOrderHistory() {
+    const container = document.getElementById('fullOrderHistoryList');
+    if (!container) return;
+    let list = cachedOrdersData.orders || [];
+    if (activeOrderHistoryFilter === 'my') {
+      list = (cachedOrdersData.myOrders && cachedOrdersData.myOrders.length > 0) ? cachedOrdersData.myOrders : [];
+    }
+
+    if (list.length === 0) {
+      container.innerHTML = `<div class="subtext" style="padding:14px 0;">No orders found in this view. Place an order in the Vibe Barista tab!</div>`;
+      return;
+    }
+
+    container.innerHTML = list.map(o => {
+      let statusClass = `status-${o.status}`;
+      let statusLabel = o.status;
+      if (o.status === 'paid_and_completed') {
+        statusLabel = '💳 Paid & Left';
+        statusClass = 'status-delivered';
+      } else if (o.status === 'brewing') {
+        statusLabel = '🟡 Brewing';
+      } else if (o.status === 'ready') {
+        statusLabel = '🟢 Ready';
+      } else if (o.status === 'delivered') {
+        statusLabel = '☕ Delivered';
       }
 
-      container.innerHTML = data.pings.map(p => `
-        <div class="ping-item">
-          <span class="ping-icon">☕</span>
+      return `
+        <div class="order-item" style="padding: 16px;">
+          <div class="order-left">
+            <span style="font-size:1.8rem;">☕</span>
+            <div>
+              <div class="order-title" style="font-size:1rem;">${escapeHtml(o.item_name)} + ${escapeHtml(o.item_pair)}</div>
+              <div class="order-details" style="margin-top:4px;">
+                <strong>${escapeHtml(o.customer_name)}</strong> • 
+                <span class="meta-tag" style="padding:2px 8px;">${escapeHtml(o.table_num)}</span> • 
+                <span>Vibe: ${escapeHtml(o.vibe)}</span> • 
+                <span>${timeAgo(o.created_at)}</span>
+              </div>
+            </div>
+          </div>
           <div>
-            <strong>${escapeHtml(p.from_name)} (${escapeHtml(p.from_table)})</strong> sent a ping to 
-            <strong>${escapeHtml(p.to_name)} (${escapeHtml(p.to_table)})</strong>: 
-            <em>"${escapeHtml(p.message)}"</em>
-            <div style="font-size:0.75rem; color:#80868b; margin-top:2px;">${timeAgo(p.created_at)}</div>
+            <span class="order-status-badge ${statusClass}">${statusLabel}</span>
           </div>
         </div>
-      `).join('');
-    } catch (e) {}
+      `;
+    }).join('');
   }
 
   // Feedback Submission

@@ -64,16 +64,16 @@
   <!-- Main App Content -->
   <main class="main-container">
 
-    <!-- Active Table Detection Banner (Auto-populated via QR code) -->
-    <div id="tableDetectionBanner" class="table-banner hidden">
+    <!-- Active Table Detection & Selection Banner (LOV) -->
+    <div id="tableDetectionBanner" class="table-banner">
       <div class="table-banner-content">
         <span class="table-banner-icon">📍</span>
         <div>
-          <strong>Table <span id="detectedTableNum"></span> Auto-Detected</strong>
-          <span class="table-banner-sub">Orders & radar check-in will be automatically pinned to this table.</span>
+          <strong>Seated at: <span id="detectedTableNum">Table 1</span></strong>
+          <span class="table-banner-sub">Orders & community radar are auto-linked to this table.</span>
         </div>
       </div>
-      <button class="btn btn-sm btn-outline" id="btnChangeTable">Change</button>
+      <button class="btn btn-sm btn-primary" id="btnChangeTable">Change Table (LOV) ▾</button>
     </div>
 
     <!-- TAB 1: SMARTER ORDERING & DISCOVERY -->
@@ -144,8 +144,23 @@
 
           <div class="place-order-form">
             <div class="inline-inputs">
-              <input type="text" id="custName" placeholder="Your Name (e.g. Alex)" value="Alex">
-              <input type="text" id="custTable" placeholder="Table # (e.g. Table 5)" value="Table 5">
+              <input type="text" id="custName" placeholder="Your Name (e.g. Alex)" value="Alex" style="flex:1;">
+              <select id="custTable" style="flex:1;">
+                <option value="Table 1" selected>Table 1</option>
+                <option value="Table 2">Table 2</option>
+                <option value="Table 3">Table 3</option>
+                <option value="Table 4">Table 4</option>
+                <option value="Table 5">Table 5</option>
+                <option value="Table 6">Table 6</option>
+                <option value="Table 7">Table 7</option>
+                <option value="Table 8">Table 8</option>
+                <option value="Table 9">Table 9</option>
+                <option value="Table 10">Table 10</option>
+                <option value="Table 11">Table 11</option>
+                <option value="Table 12">Table 12</option>
+                <option value="Bar Counter">Bar Counter</option>
+                <option value="Takeaway">Takeaway</option>
+              </select>
             </div>
             <button class="btn btn-success btn-lg" id="btnPlaceOrder">
               <span>🚀 Confirm & Send to Barista</span>
@@ -187,8 +202,22 @@
               <input type="text" id="builderName" placeholder="e.g. Priya Sharma" required>
             </div>
             <div class="form-group">
-              <label for="builderTable">Your Table Number</label>
-              <input type="text" id="builderTable" placeholder="e.g. Table 7" required>
+              <label for="builderTable">Your Table Number (LOV)</label>
+              <select id="builderTable" required>
+                <option value="Table 1" selected>Table 1</option>
+                <option value="Table 2">Table 2</option>
+                <option value="Table 3">Table 3</option>
+                <option value="Table 4">Table 4</option>
+                <option value="Table 5">Table 5</option>
+                <option value="Table 6">Table 6</option>
+                <option value="Table 7">Table 7</option>
+                <option value="Table 8">Table 8</option>
+                <option value="Table 9">Table 9</option>
+                <option value="Table 10">Table 10</option>
+                <option value="Table 11">Table 11</option>
+                <option value="Table 12">Table 12</option>
+                <option value="Bar Counter">Bar Counter</option>
+              </select>
             </div>
             <div class="form-group">
               <label for="builderProject">What are you working on / exploring today?</label>
@@ -439,6 +468,25 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-primary" id="btnDismissGcpModal">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE SELECTION (LOV) MODAL -->
+  <div class="modal hidden" id="tableLovModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🪑 Select Table (List of Values)</h3>
+        <button class="btn-close" id="btnCloseTableLovModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="subtext">Choose your seating location. This updates your table across ordering and community radar.</p>
+        <div class="table-pills-selector" id="tableLovGrid" style="gap:10px; margin-top:14px;">
+          <!-- Populated by JS: Table 1 to 12, Bar Counter, Takeaway -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="btnDismissTableLov">Close</button>
       </div>
     </div>
   </div>

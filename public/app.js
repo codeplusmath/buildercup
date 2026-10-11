@@ -657,34 +657,93 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${Math.floor(diffMin / 60)}h ago`;
   }
 
-  // 6. TABLE AUTO-DETECTION VIA QR CODE (?table=X)
+  // 6. TABLE AUTO-DETECTION & LIST OF VALUES (LOV)
   const urlParams = new URLSearchParams(window.location.search);
-  const tableParam = urlParams.get('table');
+  let currentTable = urlParams.get('table') || 'Table 1';
+  if (!isNaN(currentTable) && currentTable !== '') {
+    currentTable = `Table ${currentTable}`;
+  }
+
   const tableBanner = document.getElementById('tableDetectionBanner');
   const detectedTableNumSpan = document.getElementById('detectedTableNum');
   const btnChangeTable = document.getElementById('btnChangeTable');
+  const tableLovModal = document.getElementById('tableLovModal');
+  const btnCloseTableLovModal = document.getElementById('btnCloseTableLovModal');
+  const btnDismissTableLov = document.getElementById('btnDismissTableLov');
+  const tableLovGrid = document.getElementById('tableLovGrid');
+  const custTableSelect = document.getElementById('custTable');
+  const builderTableSelect = document.getElementById('builderTable');
 
-  if (tableParam) {
-    const formattedTable = isNaN(tableParam) ? tableParam : `Table ${tableParam}`;
-    if (tableBanner && detectedTableNumSpan) {
-      detectedTableNumSpan.textContent = tableParam;
-      tableBanner.classList.remove('hidden');
-    }
-    const custTableInput = document.getElementById('custTable');
-    const builderTableInput = document.getElementById('builderTable');
-    if (custTableInput) custTableInput.value = formattedTable;
-    if (builderTableInput) builderTableInput.value = formattedTable;
+  function updateSelectedTable(newTable) {
+    currentTable = newTable;
+    if (detectedTableNumSpan) detectedTableNumSpan.textContent = currentTable;
+    if (custTableSelect) custTableSelect.value = currentTable;
+    if (builderTableSelect) builderTableSelect.value = currentTable;
 
-    if (btnChangeTable) {
-      btnChangeTable.addEventListener('click', () => {
-        const newTable = prompt('Enter your table number (e.g. Table 4):', formattedTable);
-        if (newTable) {
-          detectedTableNumSpan.textContent = newTable;
-          if (custTableInput) custTableInput.value = newTable;
-          if (builderTableInput) builderTableInput.value = newTable;
-        }
+    // Update URL param without refreshing
+    const newUrl = new URL(window.location);
+    newUrl.searchParams.set('table', currentTable);
+    window.history.replaceState({}, '', newUrl);
+
+    // Refresh pings and order history for the newly selected table
+    loadPings();
+    loadOrderHistory();
+  }
+
+  // Populate LOV Modal Grid (Tables 1-12, Bar Counter, Takeaway)
+  const allLovTables = [];
+  for (let i = 1; i <= 12; i++) allLovTables.push(`Table ${i}`);
+  allLovTables.push('Bar Counter', 'Takeaway');
+
+  if (tableLovGrid) {
+    tableLovGrid.innerHTML = allLovTables.map(t => `
+      <button class="table-pill-btn ${t === currentTable ? 'active' : ''}" data-lov-table="${t}">
+        ${t}
+      </button>
+    `).join('');
+
+    tableLovGrid.querySelectorAll('.table-pill-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        tableLovGrid.querySelectorAll('.table-pill-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateSelectedTable(btn.dataset.lovTable);
+        if (tableLovModal) tableLovModal.classList.add('hidden');
       });
-    }
+    });
+  }
+
+  // Initial set
+  updateSelectedTable(currentTable);
+
+  // Sync when user changes either dropdown directly
+  if (custTableSelect) {
+    custTableSelect.addEventListener('change', () => {
+      updateSelectedTable(custTableSelect.value);
+    });
+  }
+  if (builderTableSelect) {
+    builderTableSelect.addEventListener('change', () => {
+      updateSelectedTable(builderTableSelect.value);
+    });
+  }
+
+  // LOV Modal open/close
+  if (btnChangeTable && tableLovModal) {
+    btnChangeTable.addEventListener('click', () => {
+      if (tableLovGrid) {
+        tableLovGrid.querySelectorAll('.table-pill-btn').forEach(b => {
+          if (b.dataset.lovTable === currentTable) b.classList.add('active');
+          else b.classList.remove('active');
+        });
+      }
+      tableLovModal.classList.remove('hidden');
+    });
+  }
+  if (btnCloseTableLovModal && tableLovModal) {
+    btnCloseTableLovModal.addEventListener('click', () => tableLovModal.classList.add('hidden'));
+  }
+  if (btnDismissTableLov && tableLovModal) {
+    btnDismissTableLov.addEventListener('click', () => tableLovModal.classList.add('hidden'));
   }
 
   // Initial Load

@@ -1,0 +1,14 @@
+{
+  "name": "cafe-companion",
+  "version": "1.0.0",
+  "description": "The Café Companion - AI-powered smart café experience for Google Builder Pop-Up",
+  "main": "server.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node --watch server.mjs"
+  },
+  "keywords": ["google-cloud", "gemini-api", "cloud-run", "cloud-sql", "builder-popup"],
+  "author": "Builder Team",
+  "license": "Apache-2.0"
+}

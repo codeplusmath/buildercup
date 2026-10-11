@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff KDS & Table QR Station | The Café Companion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .barista-header {
+      background: #1e1e24;
+      color: #fff;
+      border-bottom: 3px solid var(--g-yellow);
+    }
+    .barista-nav-tabs .nav-tab {
+      color: #a0a5ad;
+    }
+    .barista-nav-tabs .nav-tab:hover {
+      color: #fff;
+      background: #2a2a32;
+    }
+    .barista-nav-tabs .nav-tab.active {
+      color: var(--g-yellow);
+      border-bottom-color: var(--g-yellow);
+    }
+    .staff-badge {
+      background: #ea4335;
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .qr-card-preview {
+      background: #ffffff;
+      border: 3px solid #1a1a1a;
+      border-radius: 18px;
+      padding: 24px;
+      max-width: 320px;
+      margin: 0 auto;
+      text-align: center;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+    }
+    .qr-table-num {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: #1a73e8;
+      letter-spacing: -1px;
+      margin-bottom: 4px;
+    }
+    .qr-img {
+      width: 200px;
+      height: 200px;
+      margin: 14px auto;
+      display: block;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      padding: 6px;
+      background: #fff;
+    }
+    .qr-caption {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #5f6368;
+    }
+    .qr-motto {
+      font-size: 0.75rem;
+      font-style: italic;
+      color: #80868b;
+      margin-top: 6px;
+    }
+    .qr-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .table-pills-selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0;
+    }
+    .table-pill-btn {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid #dadce0;
+      background: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .table-pill-btn.active {
+      background: #1a73e8;
+      color: #fff;
+      border-color: #1a73e8;
+    }
+  </style>
+</head>
+<body>
+  <!-- Staff Portal Header -->
+  <header class="app-header barista-header">
+    <div class="header-container">
+      <div class="logo-group">
+        <div class="google-badge" style="color: #bbb;">
+          <span class="staff-badge">Staff Only</span>
+          <span>Google Builder Pop-Up KDS</span>
+        </div>
+        <h1 class="app-title" style="color:#fff;">Café Barista & QR Station</h1>
+      </div>
+      <div class="header-actions">
+        <a href="/" target="_blank" class="btn btn-outline btn-sm" style="color:#fff; border-color:#555;">
+          <span>Open Customer App ↗</span>
+        </a>
+      </div>
+    </div>
+
+    <nav class="nav-tabs barista-nav-tabs">
+      <button class="nav-tab active" data-tab="tickets">
+        <span class="tab-icon">🔔</span>
+        <span>Kitchen Tickets (KDS)</span>
+        <span class="badge-count" id="staffTicketsBadge">0</span>
+      </button>
+      <button class="nav-tab" data-tab="qr">
+        <span class="tab-icon">📱</span>
+        <span>Table QR Code Station</span>
+      </button>
+      <button class="nav-tab" data-tab="feedback">
+        <span class="tab-icon">💬</span>
+        <span>Patron Pulse & Feedback</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="main-container">
+    <!-- TAB 1: KDS KITCHEN DISPLAY -->
+    <section class="tab-pane active" id="tab-tickets">
+      <div class="hero-banner barista-banner">
+        <h2>Live Espresso & Order Queue ☕</h2>
+        <p>Real-time orders submitted by builders. Click status buttons to update live wait times across the room.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Active Orders</h3>
+          <button class="btn btn-sm btn-outline" id="btnRefreshTickets">🔄 Refresh Now</button>
+        </div>
+        <div class="tickets-grid" id="staffTicketsGrid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: PER-TABLE QR CODE GENERATOR -->
+    <section class="tab-pane" id="tab-qr">
+      <div class="hero-banner" style="background: linear-gradient(135deg, #0d5224, #137333);">
+        <h2>Table QR Codes Generator 📱</h2>
+        <p>Place these cards on each café table. When builders scan with their phone, it opens the app with their table auto-locked for frictionless ordering and radar networking.</p>
+      </div>
+
+      <div class="two-col-layout">
+        <!-- Controls -->
+        <div class="card qr-controls">
+          <div class="card-header">
+            <h3>Select Table</h3>
+          </div>
+          <p class="subtext">Click any table number below to generate its unique QR tent card:</p>
+          
+          <div class="table-pills-selector" id="tablePillsContainer">
+            <!-- 1 to 12 buttons -->
+          </div>
+
+          <div class="form-group">
+            <label>Scannable URL Target:</label>
+            <input type="text" id="qrTargetUrl" readonly style="font-family: var(--font-mono); font-size:0.8rem; background:#f8f9fa;">
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button class="btn btn-primary" id="btnTestTableLink">
+              <span>🚀 Test Table in New Tab</span>
+            </button>
+            <button class="btn btn-outline" onclick="window.print()">
+              <span>🖨️ Print Card</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tent Card Preview -->
+        <div class="card" style="display:flex; align-items:center; justify-content:center; background:#f4f6f8;">
+          <div class="qr-card-preview" id="qrTentCard">
+            <div class="google-badge" style="margin-bottom:8px;">
+              <span class="g-dot g-blue"></span>
+              <span class="g-dot g-red"></span>
+              <span class="g-dot g-yellow"></span>
+              <span class="g-dot g-green"></span>
+              <span style="font-size:0.75rem; font-weight:700;">Google Builder Pop-Up</span>
+            </div>
+            <div class="qr-table-num" id="previewTableTitle">Table 1</div>
+            <img id="previewQrImg" class="qr-img" src="" alt="Table QR Code">
+            <div class="qr-caption">Scan with Phone Camera</div>
+            <div class="qr-motto">"Order & connect before your coffee gets cold"</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: PATRON FEEDBACK -->
+    <section class="tab-pane" id="tab-feedback">
+      <div class="hero-banner" style="background: linear-gradient(135deg, #1f2937, #374151);">
+        <h2>Room Sentiment & Live Feedback 💬</h2>
+        <p>Keep a finger on the pulse of the room (temperature, noise, satisfaction).</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Customer Reviews & Vibe Tags</h3>
+        </div>
+        <div id="staffFeedbackList" class="pings-feed">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Barista Portal JavaScript
+    document.addEventListener('DOMContentLoaded', () => {
+      // Tab switching
+      const tabs = document.querySelectorAll('.barista-nav-tabs .nav-tab');
+      const panes = document.querySelectorAll('.tab-pane');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          panes.forEach(p => p.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+          if (tab.dataset.tab === 'feedback') loadFeedback();
+          if (tab.dataset.tab === 'tickets') loadTickets();
+        });
+      });
+
+      // 1. KDS Order Management
+      async function loadTickets() {
+        try {
+          const res = await fetch('/api/orders');
+          const data = await res.json();
+          const grid = document.getElementById('staffTicketsGrid');
+          if (!grid || !data.orders) return;
+
+          const activeOrders = data.orders.filter(o => o.status !== 'delivered');
+          document.getElementById('staffTicketsBadge').textContent = activeOrders.length;
+
+          if (data.orders.length === 0) {
+            grid.innerHTML = '<div class="subtext">No orders yet.</div>';
+            return;
+          }
+
+          grid.innerHTML = data.orders.map(o => `
+            <div class="ticket-card ${o.status}">
+              <div>
+                <div class="ticket-header">
+                  <span class="ticket-id">#${o.id}</span>
+                  <span class="order-status-badge status-${o.status}">${o.status}</span>
+                </div>
+                <div class="ticket-item">${escapeHtml(o.item_name)}</div>
+                <div class="ticket-pair">Pair: ${escapeHtml(o.item_pair)}</div>
+                <div class="ticket-vibe">
+                  Vibe: <strong>${escapeHtml(o.vibe)}</strong><br>
+                  📍 <strong>${escapeHtml(o.table_num)}</strong> (${escapeHtml(o.customer_name)})
+                </div>
+              </div>
+              <div class="ticket-actions" style="margin-top:14px;">
+                ${o.status === 'brewing' ? `
+                  <button class="btn btn-success btn-sm btn-kds" data-id="${o.id}" data-status="ready">Mark Ready 🔔</button>
+                ` : ''}
+                ${o.status === 'ready' ? `
+                  <button class="btn btn-outline btn-sm btn-kds" data-id="${o.id}" data-status="delivered">Delivered ✅</button>
+                ` : ''}
+                ${o.status === 'delivered' ? `
+                  <span class="subtext" style="margin:0; font-weight:700;">Order Completed</span>
+                ` : ''}
+              </div>
+            </div>
+          `).join('');
+
+          document.querySelectorAll('.btn-kds').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = btn.dataset.id;
+              const status = btn.dataset.status;
+              await fetch(`/api/orders/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+              });
+              loadTickets();
+            });
+          });
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      document.getElementById('btnRefreshTickets').addEventListener('click', loadTickets);
+
+      // 2. Table QR Code Station
+      let currentSelectedTable = 1;
+      const pillsContainer = document.getElementById('tablePillsContainer');
+      const previewTitle = document.getElementById('previewTableTitle');
+      const previewImg = document.getElementById('previewQrImg');
+      const qrTargetInput = document.getElementById('qrTargetUrl');
+
+      // Create 12 table selector pills
+      for (let i = 1; i <= 12; i++) {
+        const btn = document.createElement('button');
+        btn.className = `table-pill-btn ${i === 1 ? 'active' : ''}`;
+        btn.textContent = `Table ${i}`;
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.table-pill-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentSelectedTable = i;
+          renderQrCard();
+        });
+        pillsContainer.appendChild(btn);
+      }
+
+      function renderQrCard() {
+        const origin = window.location.origin;
+        const targetUrl = `${origin}/?table=${currentSelectedTable}`;
+        previewTitle.textContent = `Table ${currentSelectedTable}`;
+        qrTargetInput.value = targetUrl;
+        // Generate QR code using quick QR server API
+        const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(targetUrl)}&margin=10`;
+        previewImg.src = qrApi;
+      }
+
+      document.getElementById('btnTestTableLink').addEventListener('click', () => {
+        const targetUrl = qrTargetInput.value;
+        window.open(targetUrl, '_blank');
+      });
+
+      // 3. Feedback Feed
+      async function loadFeedback() {
+        try {
+          const res = await fetch('/api/feedback');
+          const data = await res.json();
+          const list = document.getElementById('staffFeedbackList');
+          if (!list || !data.feedback) return;
+          if (data.feedback.length === 0) {
+            list.innerHTML = '<div class="subtext">No feedback submitted yet.</div>';
+            return;
+          }
+          list.innerHTML = data.feedback.map(f => `
+            <div class="ping-item">
+              <span class="ping-icon">${f.rating >= 4 ? '⭐' : '💬'}</span>
+              <div>
+                <strong>Rating: ${'★'.repeat(f.rating)} (${f.tag || 'General'})</strong>
+                <div>"${escapeHtml(f.comment || 'No comment provided')}"</div>
+                <div style="font-size:0.75rem; color:#80868b;">Sentiment: ${escapeHtml(f.sentiment)} • ${timeAgo(f.created_at)}</div>
+              </div>
+            </div>
+          `).join('');
+        } catch (e) {}
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[m]);
+      }
+
+      function timeAgo(timestamp) {
+        if (!timestamp) return '';
+        const diffMin = Math.floor((Date.now() - timestamp) / 60000);
+        if (diffMin < 1) return 'just now';
+        return `${diffMin}m ago`;
+      }
+
+      // Initial run
+      loadTickets();
+      renderQrCard();
+      setInterval(loadTickets, 3500);
+    });
+  </script>
+</body>
+</html>

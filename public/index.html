@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Café Companion | Google Builder Pop-Up</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Top Header Banner -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="logo-group">
+        <div class="google-badge">
+          <span class="g-dot g-blue"></span>
+          <span class="g-dot g-red"></span>
+          <span class="g-dot g-yellow"></span>
+          <span class="g-dot g-green"></span>
+          <span class="badge-text">Google Cloud Builder Pop-Up</span>
+        </div>
+        <h1 class="app-title">The Café Companion</h1>
+      </div>
+      <div class="header-actions">
+        <div class="live-pill" id="livePulseIndicator">
+          <span class="pulse-dot"></span>
+          <span id="headerWaitTime">Wait: ~3 min</span>
+        </div>
+        <button class="btn btn-outline btn-sm" id="btnOpenGcpModal">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+          GCP Tech Stack
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-tab="ordering">
+        <span class="tab-icon">☕</span>
+        <span>Vibe Barista</span>
+      </button>
+      <button class="nav-tab" data-tab="radar">
+        <span class="tab-icon">📡</span>
+        <span>Builder Radar</span>
+        <span class="badge-count" id="buildersCountBadge">3</span>
+      </button>
+      <button class="nav-tab" data-tab="waits">
+        <span class="tab-icon">⏱️</span>
+        <span>Better Waits & Pulse</span>
+      </button>
+      <a href="/barista" class="nav-tab staff-link" target="_blank" title="Barista Kitchen Display System">
+        <span class="tab-icon">🔒</span>
+        <span>Staff KDS ↗</span>
+      </a>
+    </nav>
+  </header>
+
+  <!-- Main App Content -->
+  <main class="main-container">
+
+    <!-- Active Table Detection Banner (Auto-populated via QR code) -->
+    <div id="tableDetectionBanner" class="table-banner hidden">
+      <div class="table-banner-content">
+        <span class="table-banner-icon">📍</span>
+        <div>
+          <strong>Table <span id="detectedTableNum"></span> Auto-Detected</strong>
+          <span class="table-banner-sub">Orders & radar check-in will be automatically pinned to this table.</span>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-outline" id="btnChangeTable">Change</button>
+    </div>
+
+    <!-- TAB 1: SMARTER ORDERING & DISCOVERY -->
+    <section class="tab-pane active" id="tab-ordering">
+      <div class="hero-banner">
+        <h2>Before your coffee gets cold. ☕</h2>
+        <p>Tell the Gemini-powered Barista what you’re working on, your energy level, or dietary preferences for a tailor-made pairing.</p>
+      </div>
+
+      <div class="card order-generator-card">
+        <div class="card-header">
+          <h3>✨ AI Vibe Matchmaker</h3>
+          <span class="ai-chip" id="aiStatusChip">Gemini 1.5 Flash</span>
+        </div>
+
+        <div class="vibe-presets">
+          <label class="section-label">Quick Vibe Selectors:</label>
+          <div class="pill-group">
+            <button class="vibe-pill" data-vibe="1-Hour Hackathon Sprint (High caffeine, zero sugar crash)">🔥 1-Hour Sprint</button>
+            <button class="vibe-pill" data-vibe="Deep Focus Coding (Smooth oat flat white, sustained focus)">🧠 Deep Focus</button>
+            <button class="vibe-pill" data-vibe="Post-Lunch Slump Reset (Crisp, cold, invigorating)">⚡ Slump Reset</button>
+            <button class="vibe-pill" data-vibe="Creative Brainstorm & Meetup (Aromatic, fruity, light)">💡 Brainstorming</button>
+            <button class="vibe-pill" data-vibe="Chill Decaf & Sweet Treat (Smooth, relaxing, comforting)">🌿 Decaf & Sweet</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="orderPrompt">Or tell the Barista your exact mood / craving:</label>
+          <div class="input-with-button">
+            <input type="text" id="orderPrompt" placeholder="e.g. Need sharp energy for debugging a cloud function, lactose-free and refreshing...">
+            <button class="btn btn-primary" id="btnGenerateVibe">
+              <span class="btn-text">Craft My Order</span>
+              <span class="spinner hidden"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Generated Recommendation Box -->
+        <div class="recommendation-result" id="recommendationCard">
+          <div class="rec-badge" id="recVibeTag">Match: Deep Focus</div>
+          <div class="rec-grid">
+            <div class="rec-item">
+              <span class="rec-icon">☕</span>
+              <div>
+                <div class="rec-label">Recommended Drink</div>
+                <h4 id="recDrinkTitle">Cortado with Oat Velvet & Cardamom</h4>
+              </div>
+            </div>
+            <div class="rec-item">
+              <span class="rec-icon">🥐</span>
+              <div>
+                <div class="rec-label">Complementary Bite</div>
+                <h4 id="recPairTitle">Almond Biscotti with Salted Flakes</h4>
+              </div>
+            </div>
+          </div>
+          
+          <div class="rec-meta">
+            <span class="meta-tag" id="recCaffeine">⚡ Caffeine: Balanced (110mg)</span>
+            <span class="meta-tag" id="recPrepTime">⏱️ Prep Time: ~3 min</span>
+          </div>
+
+          <p class="rec-rationale" id="recRationale">
+            "A balanced 1:1 ratio of rich espresso and micro-textured oat milk to deliver smooth cognitive stamina without spike or crash."
+          </p>
+
+          <hr class="divider">
+
+          <div class="place-order-form">
+            <div class="inline-inputs">
+              <input type="text" id="custName" placeholder="Your Name (e.g. Alex)" value="Alex">
+              <input type="text" id="custTable" placeholder="Table # (e.g. Table 5)" value="Table 5">
+            </div>
+            <button class="btn btn-success btn-lg" id="btnPlaceOrder">
+              <span>🚀 Confirm & Send to Barista</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Orders Summary -->
+      <div class="card recent-orders-card">
+        <div class="card-header">
+          <h3>📋 Live Café Order Queue</h3>
+          <span class="status-subtext">Real-time status synced via Cloud Run & SQL</span>
+        </div>
+        <div class="orders-list" id="customerOrdersList">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: CONNECT PEOPLE (BUILDER RADAR) -->
+    <section class="tab-pane" id="tab-radar">
+      <div class="hero-banner radar-banner">
+        <h2>Connect with fellow builders 🤝</h2>
+        <p>Don't code alone. See who's in the café, what they are architecting on Google Cloud, and break the ice!</p>
+      </div>
+
+      <div class="two-col-layout">
+        <!-- Left: Check In Form -->
+        <div class="card checkin-card">
+          <div class="card-header">
+            <h3>📍 Check In to Your Table</h3>
+          </div>
+          <p class="subtext">Make yourself discoverable to find collaborators, swap ideas, or get tech feedback.</p>
+          
+          <form id="checkInForm">
+            <div class="form-group">
+              <label for="builderName">Your Name</label>
+              <input type="text" id="builderName" placeholder="e.g. Priya Sharma" required>
+            </div>
+            <div class="form-group">
+              <label for="builderTable">Your Table Number</label>
+              <input type="text" id="builderTable" placeholder="e.g. Table 7" required>
+            </div>
+            <div class="form-group">
+              <label for="builderProject">What are you working on / exploring today?</label>
+              <textarea id="builderProject" rows="2" placeholder="e.g. Building an AI agent using Gemini 1.5 Flash and deploying it on Cloud Run" required></textarea>
+            </div>
+            <div class="form-group">
+              <label for="builderSkills">Tech Stack / Key Tools</label>
+              <input type="text" id="builderSkills" placeholder="e.g. Python, Cloud Run, Vertex AI, pgvector">
+            </div>
+            <div class="form-group">
+              <label for="builderOpenTo">Open to:</label>
+              <select id="builderOpenTo">
+                <option value="Casual tech banter & coffee">☕ Casual tech banter & coffee</option>
+                <option value="Architecture review & feedback">📐 Architecture review & feedback</option>
+                <option value="Teaming up for hackathon">🏆 Teaming up for hackathon</option>
+                <option value="Silent focus co-working">🤫 Silent focus co-working</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" id="btnSubmitCheckIn">
+              <span>Broadside to Café Radar 📡</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Right: Builders in Room List -->
+        <div class="card builders-directory-card">
+          <div class="card-header">
+            <h3>👥 Builders in the Room</h3>
+            <span class="badge-count" id="radarTotalCount">3 Active</span>
+          </div>
+          <div class="builders-list" id="buildersList">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Ping Modal -->
+      <div class="modal hidden" id="pingModal">
+        <div class="modal-card">
+          <div class="modal-header">
+            <h3 id="pingModalTitle">Send Coffee Ping to Builder</h3>
+            <button class="btn-close" id="btnClosePingModal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p id="pingIcebreakerSuggestion" class="ai-tip-box"></p>
+            <div class="form-group">
+              <label for="pingCustomMessage">Personal Note / Message:</label>
+              <textarea id="pingCustomMessage" rows="3" placeholder="Hey! Saw you're working with Cloud Run. Mind if I ask a quick question about cold starts?"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline" id="btnCancelPing">Cancel</button>
+            <button class="btn btn-success" id="btnSendPingConfirm">Send Ping ☕</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: BETTER WAITS & ROOM PULSE -->
+    <section class="tab-pane" id="tab-waits">
+      <div class="hero-banner pulse-banner">
+        <h2>Real-Time Café Pulse & Wait Times ⏱️</h2>
+        <p>Know exactly when your coffee will be ready, when to take a break, and read the café's innovation energy.</p>
+      </div>
+
+      <div class="pulse-stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">⏳</div>
+          <div class="stat-value" id="pulseWaitTime">~3 min</div>
+          <div class="stat-label">Estimated Queue Wait</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">☕</div>
+          <div class="stat-value" id="pulseBrewingCount">1</div>
+          <div class="stat-label">Orders Brewing Now</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value" id="pulseConnectedCount">3</div>
+          <div class="stat-label">Builders Connected</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⚡</div>
+          <div class="stat-value" id="pulseCrowdStatus">Chill & Fast</div>
+          <div class="stat-label">Café Atmosphere</div>
+        </div>
+      </div>
+
+      <div class="two-col-layout">
+        <div class="card">
+          <div class="card-header">
+            <h3>📈 Best Time to Visit</h3>
+          </div>
+          <div class="timing-meter">
+            <div class="meter-bar">
+              <div class="meter-fill" style="width: 35%;"></div>
+            </div>
+            <div class="meter-labels">
+              <span>Quiet (Now)</span>
+              <span>Moderate (15m)</span>
+              <span>Peak Rush (45m)</span>
+            </div>
+          </div>
+          <div class="forecast-tip" id="forecastRecommendation">
+            💡 <strong>Smart Recommendation:</strong> Current queue is minimal (under 5 mins). Great moment to grab your cold brew before the next presentation block!
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>💬 Room Sentiment & Feedback</h3>
+          </div>
+          <p class="subtext">Help the café team tune the music, temperature, or coffee grind!</p>
+          <div class="feedback-quick-form">
+            <div class="rating-stars" id="starRating">
+              <span data-star="1">⭐</span>
+              <span data-star="2">⭐</span>
+              <span data-star="3">⭐</span>
+              <span data-star="4">⭐</span>
+              <span data-star="5" class="selected">⭐</span>
+            </div>
+            <div class="tag-selector">
+              <button class="feedback-tag active" data-tag="Great Coffee">☕ Great Coffee</button>
+              <button class="feedback-tag" data-tag="Fast Service">⚡ Fast Service</button>
+              <button class="feedback-tag" data-tag="Vibe is Great">🎵 Good Music</button>
+              <button class="feedback-tag" data-tag="Too Cold">❄️ AC Chilly</button>
+            </div>
+            <div class="input-with-button">
+              <input type="text" id="feedbackComment" placeholder="Any message for the café team?">
+              <button class="btn btn-primary" id="btnSubmitFeedback">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>💌 Recent Café Pings & Community Sparks</h3>
+        </div>
+        <div class="pings-feed" id="pingsFeed">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="customer-footer">
+    <div class="footer-container">
+      <div>Google Cloud Builder Pop-Up • Hyderabad</div>
+      <div>
+        <a href="/barista" target="_blank" class="footer-staff-link">🔐 Staff Barista KDS & Table QR Station</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- GCP ARCHITECTURE & API KEY MODAL -->
+  <div class="modal hidden" id="gcpModal">
+    <div class="modal-card wide">
+      <div class="modal-header">
+        <div class="google-badge">
+          <span class="g-dot g-blue"></span>
+          <span class="g-dot g-red"></span>
+          <span class="g-dot g-yellow"></span>
+          <span class="g-dot g-green"></span>
+          <span class="badge-text">Architecture & GCP Tech Stack</span>
+        </div>
+        <button class="btn-close" id="btnCloseGcpModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>How <strong>The Café Companion</strong> fulfills all Google Builder Pop-Up requirements:</p>
+        
+        <div class="gcp-tech-grid">
+          <div class="gcp-tech-box">
+            <div class="tech-icon">☁️</div>
+            <h4>Cloud Run</h4>
+            <p>Single container microservice serving both API and frontend with auto-scaling to zero and zero-cold-start optimization.</p>
+            <span class="tech-tag">Deployed via Container</span>
+          </div>
+
+          <div class="tech-icon-box gcp-tech-box">
+            <div class="tech-icon">🗄️</div>
+            <h4>Cloud SQL + pgvector</h4>
+            <p>Transactional store for orders, builder check-ins, table locations, and vector similarity search for community matching.</p>
+            <span class="tech-tag">Relational & Vector Data</span>
+          </div>
+
+          <div class="tech-icon-box gcp-tech-box">
+            <div class="tech-icon">✨</div>
+            <h4>Gemini APIs</h4>
+            <p>Gemini 1.5/2.0 Flash for conversational menu understanding, vibe synthesis, structured order outputs, and custom icebreakers.</p>
+            <span class="tech-tag">Structured Output AI</span>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="key-config-section">
+          <h4>🔑 Live Gemini API Key Configuration</h4>
+          <p class="subtext">Enter your Google AI Studio or Vertex AI Gemini API key to activate live generative responses:</p>
+          <div class="input-with-button">
+            <input type="password" id="geminiApiKeyInput" placeholder="AIzaSy...">
+            <button class="btn btn-primary" id="btnSaveApiKey">Save & Connect</button>
+          </div>
+          <span id="apiKeySaveStatus" class="status-indicator"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="btnDismissGcpModal">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

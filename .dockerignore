@@ -1,0 +1,5 @@
+node_modules
+cafe.db
+.git
+.env
+*.log

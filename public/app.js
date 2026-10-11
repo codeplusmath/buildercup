@@ -174,8 +174,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       if (!buildersList || !data.builders) return;
 
-      document.getElementById('radarTotalCount').textContent = `${data.builders.length} Active`;
-      document.getElementById('buildersCountBadge').textContent = data.builders.length;
+      const radarCount = document.getElementById('radarTotalCount');
+      if (radarCount) radarCount.textContent = `${data.builders.length} Active`;
+      const buildersBadge = document.getElementById('buildersCountBadge');
+      if (buildersBadge) buildersBadge.textContent = data.builders.length;
 
       buildersList.innerHTML = data.builders.map(b => `
         <div class="builder-card">
